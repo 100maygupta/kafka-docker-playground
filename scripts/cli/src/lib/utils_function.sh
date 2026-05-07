@@ -277,13 +277,13 @@ function maybe_create_image()
       log "🛠️ Restoring microdnf into ${CP_CONNECT_IMAGE}:${CP_CONNECT_TAG}"
       pm_tmp_dir=$(mktemp -d -t pg-pm-XXXXXXXXXX)
       cat << EOF > $pm_tmp_dir/Dockerfile
-FROM registry.access.redhat.com/ubi9:latest AS pm
-RUN dnf install -y --installroot=/sysroot --releasever=9 \\
-      --setopt=install_weak_deps=False --nodocs microdnf
+FROM redhat/ubi9-minimal:latest AS pm
+RUN rm -f /etc/passwd /etc/group /etc/shadow /etc/gshadow /etc/subuid /etc/subgid
 
 FROM ${CP_CONNECT_IMAGE}:${CP_CONNECT_TAG}
 USER root
-COPY --from=pm /sysroot/usr/bin/microdnf /usr/bin/microdnf
+COPY --from=pm / /
+RUN ldconfig
 USER appuser
 EOF
       DOCKER_BUILDKIT=0 docker build -t ${CP_CONNECT_IMAGE}:${CP_CONNECT_TAG} $pm_tmp_dir
