@@ -284,6 +284,7 @@ RUN dnf install -y --installroot=/sysroot --releasever=9 \\
 FROM ${CP_CONNECT_IMAGE}:${CP_CONNECT_TAG}
 USER root
 COPY --from=pm /sysroot/usr/bin/microdnf /usr/bin/microdnf
+USER appuser
 EOF
       DOCKER_BUILDKIT=0 docker build -t ${CP_CONNECT_IMAGE}:${CP_CONNECT_TAG} $pm_tmp_dir
       rm -rf $pm_tmp_dir
