@@ -279,13 +279,25 @@ function maybe_create_image()
       cat << EOF > $pm_tmp_dir/Dockerfile
 FROM registry.access.redhat.com/ubi9:latest AS pm
 RUN dnf install -y --installroot=/sysroot --releasever=9 \\
-      --setopt=install_weak_deps=False --nodocs microdnf \\
- && rm -f /sysroot/etc/passwd /sysroot/etc/group /sysroot/etc/shadow \\
-          /sysroot/etc/gshadow /sysroot/etc/subuid /sysroot/etc/subgid
+      --setopt=install_weak_deps=False --nodocs microdnf
 
 FROM ${CP_CONNECT_IMAGE}:${CP_CONNECT_TAG}
 USER root
-COPY --from=pm /sysroot/ /
+COPY --from=pm /sysroot/usr/bin/microdnf /sysroot/usr/bin/rpm /usr/bin/
+COPY --from=pm \\
+  /sysroot/usr/lib64/libdnf*.so.* /sysroot/usr/lib64/libsolv*.so.* \\
+  /sysroot/usr/lib64/librpm*.so.* /sysroot/usr/lib64/libgpg*.so.* \\
+  /sysroot/usr/lib64/libassuan.so.* /sysroot/usr/lib64/libsmartcols.so.* \\
+  /sysroot/usr/lib64/libmodulemd.so.* /sysroot/usr/lib64/libsqlite3.so.* \\
+  /sysroot/usr/lib64/libpopt.so.* /sysroot/usr/lib64/libzstd.so.* \\
+  /sysroot/usr/lib64/liblzma.so.* /sysroot/usr/lib64/libbz2.so.* \\
+  /sysroot/usr/lib64/libelf.so.* /sysroot/usr/lib64/libxml2.so.* \\
+  /sysroot/usr/lib64/libyaml-0.so.* /usr/lib64/
+COPY --from=pm /sysroot/etc/dnf /etc/dnf
+COPY --from=pm /sysroot/etc/yum.repos.d /etc/yum.repos.d
+COPY --from=pm /sysroot/etc/pki/rpm-gpg /etc/pki/rpm-gpg
+COPY --from=pm /sysroot/var/lib/rpm /var/lib/rpm
+COPY --from=pm /sysroot/var/lib/dnf /var/lib/dnf
 RUN ldconfig
 EOF
       DOCKER_BUILDKIT=0 docker build -t ${CP_CONNECT_IMAGE}:${CP_CONNECT_TAG} $pm_tmp_dir
