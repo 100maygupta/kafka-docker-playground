@@ -1,5 +1,6 @@
     "character.encoding": "UTF-8",
     "credentials.provider.classpath": "STRING",
+    "disable.mqcsp.authentication": "false",
     "exactly.once.enabled": "false",
     "jms.connection.backoff.ms": "2000",
     "jms.connection.max.retries": "150",
