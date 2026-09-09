@@ -4,10 +4,10 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 source ${DIR}/../../scripts/utils.sh
 
-cd ../../ccloud/fm-debezium-sqlserver-v2-source
+
 if [ ! -z "$SQL_DATAGEN" ]
 then
-     cd ../../connect/connect-debezium-sqlserver-source
+    cd ../../ccloud/fm-debezium-sqlserver-v2-source
      log "🌪️ SQL_DATAGEN is set"
      for component in sqlserver-datagen
      do
@@ -26,7 +26,6 @@ then
 else
      log "🛑 SQL_DATAGEN is not set"
 fi
-cd -
 
 NGROK_AUTH_TOKEN=${NGROK_AUTH_TOKEN:-$1}
 

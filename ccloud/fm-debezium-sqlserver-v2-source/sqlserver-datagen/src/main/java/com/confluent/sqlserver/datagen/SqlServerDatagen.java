@@ -58,16 +58,42 @@ public class SqlServerDatagen {
                 try (Connection connection = database.getConnection()) {
                     while (!finishExecution.get()) {
                         connection.setAutoCommit(false);
-                        PreparedStatement stmt = connection.prepareStatement("insert into CUSTOMERS (first_name, last_name, email) values (?, ?, ?)");
-                        stmt.setString(1, faker.name().firstName());
-                        stmt.setString(2, faker.name().lastName());
-                        stmt.setString(3, faker.internet().emailAddress());
-                        stmt.executeUpdate();
-                        connection.commit();
-                        stmt.close();
+                        try {
+                            int customerId;
+                            try (PreparedStatement insert = connection.prepareStatement(
+                                    "insert into CUSTOMERS (first_name, last_name, email) values (?, ?, ?)",
+                                    Statement.RETURN_GENERATED_KEYS)) {
+                                insert.setString(1, faker.name().firstName());
+                                insert.setString(2, faker.name().lastName());
+                                insert.setString(3, faker.internet().emailAddress());
+                                insert.executeUpdate();
+                                try (ResultSet generatedKeys = insert.getGeneratedKeys()) {
+                                    if (!generatedKeys.next()) {
+                                        throw new SQLException("SQL Server did not return the generated customer id");
+                                    }
+                                    customerId = generatedKeys.getInt(1);
+                                }
+                            }
 
-                        numTransactions.getAndIncrement();
-                        stmt.close();
+                            try (PreparedStatement update = connection.prepareStatement(
+                                    "update CUSTOMERS set email = ? where id = ?")) {
+                                update.setString(1, "UPDATED_EMAIL");
+                                update.setInt(2, customerId);
+                                update.executeUpdate();
+                            }
+
+                            // try (PreparedStatement delete = connection.prepareStatement(
+                            //         "delete from CUSTOMERS where id = ?")) {
+                            //     delete.setInt(1, customerId);
+                            //     delete.executeUpdate();
+                            // }
+
+                            connection.commit();
+                            numTransactions.getAndIncrement();
+                        } catch (SQLException sqlException) {
+                            connection.rollback();
+                            throw sqlException;
+                        }
                     }
                 } catch (SQLException sqlException) {
                     sqlException.printStackTrace();
