@@ -112,13 +112,10 @@ do
                 -F /tmp/configuration/ccloud.properties \
                 -X isolation.level=read_committed \
                 -C -t "$topic" \
-                -o beginning -e -q -f '%o\n' 2>/dev/null | wc -l | tr -d ' ')
+                -o beginning -e -q \
+                -f '%o\n' 2>/dev/null | wc -l | tr -d ' ')
 
-            # Ensure fall-through logic handles 0 properly:
-            if [ -z "$count" ]; then
-                count=0
-            fi
-            echo "$count"
+            echo "${count:-0}"
         fi
 
     elif [[ "$environment" == "cfk" ]]
