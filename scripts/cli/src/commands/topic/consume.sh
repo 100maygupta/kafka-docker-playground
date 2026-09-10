@@ -147,7 +147,7 @@ run_local_consumer() {
 
 get_topic_message_count() {
   local topic_name="$1"
-  playground topic get-number-records -t "$topic_name" | tail -1
+  playground topic get-number-records -t "$topic_name" --isolation-level "$isolation_level" | tail -1
 }
 
 TOPIC_NOT_FOUND_RETRY_SECONDS=60
@@ -251,7 +251,7 @@ do
       topic_missing_start_time=""
 
       while true; do
-        nb_messages=$(playground topic get-number-records -t $topic | tail -1)
+        nb_messages=$(playground topic get-number-records -t $topic --isolation-level "$isolation_level" | tail -1)
         
         if [[ ! $nb_messages =~ ^[0-9]+$ ]]
         then

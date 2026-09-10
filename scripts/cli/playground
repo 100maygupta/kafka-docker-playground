@@ -28150,6 +28150,7 @@ playground_topic_get_number_records_command() {
 
   # src/commands/topic/get-number-records.sh
   topic="${args[--topic]}"
+  isolation_level="${args[--isolation-level]}"
 
   get_security_broker "--command-config"
 
@@ -28242,17 +28243,33 @@ playground_topic_get_number_records_command() {
       then
           # --- OFFSET MODE (Default) ---
           # Note: We must explicitly call 'kcat' in the exec command now
-          offsets=$(docker exec "$kcat_container_name" kcat \
-              -F /tmp/configuration/ccloud.properties \
-              -C -t "$topic" \
-              -o -1 -e -q \
-              -f '%o\n' 2>/dev/null)
 
-          if [ -z "$offsets" ]; then
-              echo "0"
+          if [ "$isolation_level" != "read_committed" ]
+          then
+              offsets=$(docker exec "$kcat_container_name" kcat \
+                  -F /tmp/configuration/ccloud.properties \
+                  -C -t "$topic" \
+                  -o -1 -e -q \
+                  -f '%o\n' 2>/dev/null)
+
+              if [ -z "$offsets" ]; then
+                  echo "0"
+              else
+                  # Sum offsets + 1 (0-based index)
+                  echo "$offsets" | awk '{s+=$1+1} END {print s}'
+              fi
           else
-              # Sum offsets + 1 (0-based index)
-              echo "$offsets" | awk '{s+=$1+1} END {print s}'
+              count=$(docker exec "$kcat_container_name" kcat \
+                  -F /tmp/configuration/ccloud.properties \
+                  -X isolation.level=read_committed \
+                  -C -t "$topic" \
+                  -o beginning -e -q -f '%o\n' 2>/dev/null | wc -l | tr -d ' ')
+
+              # Ensure fall-through logic handles 0 properly:
+              if [ -z "$count" ]; then
+                  count=0
+              fi
+              echo "$count"
           fi
 
       elif [[ "$environment" == "cfk" ]]
@@ -28639,7 +28656,7 @@ playground_topic_consume_command() {
 
   get_topic_message_count() {
     local topic_name="$1"
-    playground topic get-number-records -t "$topic_name" | tail -1
+    playground topic get-number-records -t "$topic_name" --isolation-level "$isolation_level" | tail -1
   }
 
   TOPIC_NOT_FOUND_RETRY_SECONDS=60
@@ -28744,7 +28761,7 @@ playground_topic_consume_command() {
         topic_missing_start_time=""
 
         while true; do
-          nb_messages=$(playground topic get-number-records -t $topic | tail -1)
+          nb_messages=$(playground topic get-number-records -t $topic --isolation-level "$isolation_level" | tail -1)
 
           if [[ ! $nb_messages =~ ^[0-9]+$ ]]
           then
@@ -50862,6 +50879,20 @@ playground_topic_get_number_records_parse_requirements() {
         fi
         ;;
 
+      # :flag.case
+      --isolation-level)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+          args['--isolation-level']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--isolation-level requires an argument: --isolation-level ISOLATION-LEVEL" >&2
+          exit 1
+        fi
+        ;;
+
       -?*)
         printf "invalid option: %s\n" "$key" >&2
         exit 1
@@ -50877,6 +50908,15 @@ playground_topic_get_number_records_parse_requirements() {
 
     esac
   done
+
+  # :command.default_assignments
+  [[ -n ${args['--isolation-level']:-} ]] || args['--isolation-level']="read_uncommitted"
+
+  # :command.whitelist_filter
+  if [[ ${args['--isolation-level']:-} ]] && [[ ! ${args['--isolation-level']:-} =~ ^(read_uncommitted|read_committed)$ ]]; then
+    printf "%s\n" "--isolation-level must be one of: read_uncommitted, read_committed" >&2
+    exit 1
+  fi
 
 }
 

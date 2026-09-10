@@ -1,4 +1,5 @@
 topic="${args[--topic]}"
+isolation_level="${args[--isolation-level]}"
 
 get_security_broker "--command-config"
 
@@ -91,17 +92,33 @@ do
     then
         # --- OFFSET MODE (Default) ---
         # Note: We must explicitly call 'kcat' in the exec command now
-        offsets=$(docker exec "$kcat_container_name" kcat \
-            -F /tmp/configuration/ccloud.properties \
-            -C -t "$topic" \
-            -o -1 -e -q \
-            -f '%o\n' 2>/dev/null)
-        
-        if [ -z "$offsets" ]; then
-            echo "0"
+
+        if [ "$isolation_level" != "read_committed" ]
+        then
+            offsets=$(docker exec "$kcat_container_name" kcat \
+                -F /tmp/configuration/ccloud.properties \
+                -C -t "$topic" \
+                -o -1 -e -q \
+                -f '%o\n' 2>/dev/null)
+            
+            if [ -z "$offsets" ]; then
+                echo "0"
+            else
+                # Sum offsets + 1 (0-based index)
+                echo "$offsets" | awk '{s+=$1+1} END {print s}'
+            fi
         else
-            # Sum offsets + 1 (0-based index)
-            echo "$offsets" | awk '{s+=$1+1} END {print s}'
+            count=$(docker exec "$kcat_container_name" kcat \
+                -F /tmp/configuration/ccloud.properties \
+                -X isolation.level=read_committed \
+                -C -t "$topic" \
+                -o beginning -e -q -f '%o\n' 2>/dev/null | wc -l | tr -d ' ')
+
+            # Ensure fall-through logic handles 0 properly:
+            if [ -z "$count" ]; then
+                count=0
+            fi
+            echo "$count"
         fi
 
     elif [[ "$environment" == "cfk" ]]
