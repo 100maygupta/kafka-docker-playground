@@ -154,7 +154,7 @@ if [ "$(uname -m)" = "arm64" ]
 then
      :
 else
-     if version_gt $TAG_BASE "7.9.9"
+     if version_gt $TAG_BASE "7.9.99"
      then
           playground container exec --root --command "microdnf -y install libnsl2"
           playground container exec --root --command "ln -s /usr/lib64/libnsl.so.3 /usr/lib64/libnsl.so.1"

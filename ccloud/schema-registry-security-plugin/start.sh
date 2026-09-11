@@ -20,7 +20,7 @@ playground topic delete --topic schemas-security-plugin
 set -e
 
 JAAS_CONFIG_FILE="/tmp/jaas_config.file"
-if version_gt $TAG_BASE "7.9.9"; then
+if version_gt $TAG_BASE "7.9.99"; then
   export JAAS_CONFIG_FILE="/tmp/jaas_config_8_plus.file"
 fi
 

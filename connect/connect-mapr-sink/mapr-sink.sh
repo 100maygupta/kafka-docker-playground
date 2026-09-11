@@ -9,7 +9,7 @@ if ! version_gt $TAG_BASE "6.9.9"; then
     exit 111
 fi
 
-if version_gt $TAG_BASE "7.9.9"; then
+if version_gt $TAG_BASE "7.9.99"; then
     logwarn "This example is not supported with CP 8.0 and later versions"
     logwarn "see deprecation https://docs.confluent.io/kafka-connectors/maprdb/current/overview.html" 
     exit 111

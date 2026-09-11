@@ -4,7 +4,7 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 source ${DIR}/../../scripts/utils.sh
 
-if version_gt $TAG_BASE "7.9.9"; then
+if version_gt $TAG_BASE "7.9.99"; then
     logerror "This can only be run with image or version lower than 8.0.0"
     exit 111
 fi

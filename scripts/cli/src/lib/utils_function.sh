@@ -303,7 +303,7 @@ EOF
         if version_gt $TAG_BASE "8.0.99"
         then
           CONNECT_3RDPARTY_INSTALL="if [ ! -f /tmp/done ]; then microdnf -y install bind-utils openssl unzip findutils net-tools nc jq which iptables libmnl krb5-workstation krb5-libs vim && microdnf clean all  && touch /tmp/done; fi"
-        elif version_gt $TAG_BASE "7.9.9"
+        elif version_gt $TAG_BASE "7.9.99"
         then
           CONNECT_3RDPARTY_INSTALL="if [ ! -f /tmp/done ]; then yum -y install bind-utils openssl unzip findutils net-tools nc jq which iptables libmnl krb5-workstation krb5-libs vim && yum clean all && rm -rf /var/cache/yum && rpm -i --nosignature https://yum.oracle.com/repo/OracleLinux/OL9/appstream/aarch64/getPackage/tcpdump-4.99.0-9.el9.aarch64.rpm && touch /tmp/done; fi"
         else
@@ -313,7 +313,7 @@ EOF
         if version_gt $TAG_BASE "8.0.99"
         then
           CONNECT_3RDPARTY_INSTALL="if [ ! -f /tmp/done ]; then microdnf -y install bind-utils openssl unzip findutils net-tools nc jq which iptables libmnl krb5-workstation krb5-libs vim && microdnf clean all  && touch /tmp/done; fi"
-        elif version_gt $TAG_BASE "7.9.9"
+        elif version_gt $TAG_BASE "7.9.99"
         then
           CONNECT_3RDPARTY_INSTALL="if [ ! -f /tmp/done ]; then yum -y install bind-utils openssl unzip findutils net-tools nc jq which iptables libmnl krb5-workstation krb5-libs vim && yum clean all && rm -rf /var/cache/yum && rpm -i --nosignature https://yum.oracle.com/repo/OracleLinux/OL9/appstream/x86_64/getPackage/tcpdump-4.99.0-9.el9.x86_64.rpm && touch /tmp/done; fi"
         else
@@ -559,7 +559,7 @@ function get_ccs_or_ce_specifics() {
     #log "Ⓜ️ detected connect community image used, disabling Monitoring Interceptors"
     export CONNECT_CONSUMER_INTERCEPTOR_CLASSES=""
     export CONNECT_PRODUCER_INTERCEPTOR_CLASSES=""
-  elif version_gt $TAG_BASE "7.9.9"
+  elif version_gt $TAG_BASE "7.9.99"
   then
     #log "Ⓜ️ disabling Monitoring Interceptors as CP image is > 8"
     export CONNECT_CONSUMER_INTERCEPTOR_CLASSES=""
